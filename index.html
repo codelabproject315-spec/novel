@@ -290,13 +290,144 @@
     30%{ box-shadow:0 0 60px 10px rgba(217,178,94,0.25); }
     100%{ box-shadow:0 20px 60px rgba(0,0,0,0.55); }
   }
+
+  /* ============================================================
+     マップ探索画面（起動時に最初に表示する導入パート）
+     ============================================================ */
+  #mapScreen{
+    position:fixed; inset:0;
+    z-index:5;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--bg-night);
+    transition:opacity .5s ease;
+  }
+  #mapScreen.map-fadeout{ opacity:0; pointer-events:none; }
+
+  .game-container{
+    width:360px;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px 16px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.55);
+    text-align:center;
+  }
+  #mapScreen h3{
+    font-family:'Shippori Mincho', serif;
+    color:var(--gold-soft);
+    margin:0 0 6px;
+    font-size:18px;
+  }
+  #mapScreen p{
+    font-size:11px;
+    color:var(--text-dim);
+    margin:0 0 16px;
+    line-height:1.5;
+  }
+  .map{
+    display:grid;
+    grid-template-columns:repeat(10, 32px);
+    grid-template-rows:repeat(10, 32px);
+    width:320px;
+    height:320px;
+    background:#0b0914;
+    border:1px solid var(--line);
+    position:relative;
+    margin:0 auto;
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .tile{ width:32px; height:32px; box-sizing:border-box; }
+  .tile-wall{
+    background:#231d3a;
+    border:1px solid rgba(217,178,94,0.05);
+    position:relative;
+  }
+  .tile-wall::after{
+    content:"📚"; font-size:11px; position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center; opacity:0.55;
+  }
+  .tile-floor{
+    background:#0f0c1e;
+    border:1px solid rgba(217,178,94,0.02);
+  }
+  .tile-event{
+    background:radial-gradient(circle, rgba(217,178,94,0.4) 0%, rgba(15,12,30,0) 70%);
+    position:relative;
+    animation:mapPulse 1.5s infinite alternate;
+  }
+  .tile-event::after{
+    content:"📖"; font-size:15px; position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    filter:drop-shadow(0 0 4px var(--gold));
+  }
+  @keyframes mapPulse{ 0%{ opacity:0.7; } 100%{ opacity:1; } }
+  .player{
+    width:32px; height:32px;
+    border:2px solid var(--gold);
+    border-radius:50%;
+    position:absolute;
+    transition:left 0.15s ease, top 0.15s ease;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(217,178,94,0.25);
+    box-shadow:0 0 10px rgba(217,178,94,0.5);
+    z-index:10;
+  }
+  .player::after{ content:"🚶"; font-size:15px; }
+  .controls{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
+    width:150px;
+    margin:18px auto 0;
+  }
+  .btn-dir{
+    background:rgba(217,178,94,0.05);
+    border:1px solid var(--line);
+    color:var(--gold-soft);
+    border-radius:8px;
+    padding:12px;
+    font-size:16px;
+    cursor:pointer;
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:manipulation;
+    transition:background 0.1s ease;
+  }
+  .btn-dir:active{ background:rgba(217,178,94,0.2); }
+  .btn-empty{ visibility:hidden; }
 </style>
 </head>
 <body>
 
   <div class="embers" id="embers"></div>
 
-  <div id="appRoot">
+  <div id="mapScreen">
+    <div class="game-container">
+      <h3>深夜の書庫 探索</h3>
+      <p>キーボードの[矢印キー / WASD]、またはボタンで移動し、右下の光る本（📖）まで進んでください。</p>
+
+      <div class="map" id="gameMap">
+        <div class="player" id="player"></div>
+      </div>
+
+      <div class="controls">
+        <button class="btn-empty"></button>
+        <button class="btn-dir" data-dx="0" data-dy="-1">▲</button>
+        <button class="btn-empty"></button>
+        <button class="btn-dir" data-dx="-1" data-dy="0">◀</button>
+        <button class="btn-empty"></button>
+        <button class="btn-dir" data-dx="1" data-dy="0">▶</button>
+        <button class="btn-empty"></button>
+        <button class="btn-dir" data-dx="0" data-dy="1">▼</button>
+        <button class="btn-empty"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="appRoot" style="display:none;">
     <div class="topbar">
       <button class="sound-toggle" id="soundToggle">♪ 音を灯す</button>
       <div class="catalog" id="catalog">既知の結末 <b>0</b>/9</div>
@@ -383,6 +514,99 @@
     p.style.animationDelay = (Math.random()*12)+'s';
     embersEl.appendChild(p);
   }
+
+  /* ============================================================
+     マップ探索（起動時の導入パート）
+     ============================================================ */
+  const MAP_SIZE = 10;
+  const TILE_SIZE = 32;
+
+  // 0:床  1:本棚  2:イベント本(右下)
+  const mapData = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    [1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
+    [1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+    [1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+    [1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 0, 2, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+  ];
+
+  let playerX = 1;
+  let playerY = 1;
+  let mapActive = true;
+
+  const playerEl = document.getElementById('player');
+  const gameMapEl = document.getElementById('gameMap');
+  const mapScreenEl = document.getElementById('mapScreen');
+  const appRootEl = document.getElementById('appRoot');
+
+  function createMap(){
+    gameMapEl.innerHTML = '';
+    gameMapEl.appendChild(playerEl);
+    for (let y = 0; y < MAP_SIZE; y++) {
+      for (let x = 0; x < MAP_SIZE; x++) {
+        const tileType = mapData[y][x];
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        if (tileType === 1) tile.classList.add('tile-wall');
+        else if (tileType === 2) tile.classList.add('tile-event');
+        else tile.classList.add('tile-floor');
+        gameMapEl.appendChild(tile);
+      }
+    }
+    updatePlayerPos();
+  }
+
+  function updatePlayerPos(){
+    playerEl.style.left = (playerX * TILE_SIZE) + 'px';
+    playerEl.style.top = (playerY * TILE_SIZE) + 'px';
+  }
+
+  function movePlayer(dx, dy){
+    if(!mapActive) return;
+    const tx = playerX + dx;
+    const ty = playerY + dy;
+    if (tx < 0 || tx >= MAP_SIZE || ty < 0 || ty >= MAP_SIZE) return;
+    if (mapData[ty][tx] === 1) return;
+
+    playerX = tx;
+    playerY = ty;
+    updatePlayerPos();
+
+    if (mapData[playerY][playerX] === 2) {
+      mapActive = false;
+      setTimeout(enterLibrary, 300);
+    }
+  }
+
+  function enterLibrary(){
+    mapScreenEl.classList.add('map-fadeout');
+    setTimeout(()=>{
+      mapScreenEl.style.display = 'none';
+      appRootEl.style.display = 'flex';
+      renderNode('start');
+    }, 480);
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if(!mapActive) return;
+    if (e.key === 'ArrowUp' || e.key === 'w') { e.preventDefault(); movePlayer(0, -1); }
+    if (e.key === 'ArrowDown' || e.key === 's') { e.preventDefault(); movePlayer(0, 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'a') { e.preventDefault(); movePlayer(-1, 0); }
+    if (e.key === 'ArrowRight' || e.key === 'd') { e.preventDefault(); movePlayer(1, 0); }
+  });
+
+  document.querySelectorAll('.btn-dir').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      movePlayer(parseInt(btn.dataset.dx,10), parseInt(btn.dataset.dy,10));
+    });
+  });
+
+  createMap();
 
   /* ============================================================
      ストーリーデータ(有向グラフ構造)
@@ -763,7 +987,7 @@
     }
   }
 
-  loadCatalog().then(()=> renderNode('start'));
+  loadCatalog(); // 既知の結末カウントだけ先に読み込んでおく（本編開始はマップクリア後）
 })();
 </script>
 </body>

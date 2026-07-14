@@ -12,12 +12,6 @@
     --gold: #d9b25e;
     --gold-soft: #f0d99a;
     --line: rgba(217,178,94,0.28);
-    
-    /* RPGドットマップ用の色調 */
-    --tile-wood: #1e131d;
-    --tile-wood-dark: #140b13;
-    --shelf-wood: #3a2235;
-    --shelf-shadow: #140b15;
   }
 
   /* 画面全体のスクロールを防ぐ */
@@ -68,14 +62,14 @@
     letter-spacing: 0.5px;
   }
 
-  /* ★10x10のグリッド設定。1コマが32pxです */
+  /* ★10x10のグリッド設定（1コマ32px） */
   .map {
     display: grid;
     grid-template-columns: repeat(10, 32px);
     grid-template-rows: repeat(10, 32px);
     width: 320px;
     height: 320px;
-    background: #07040a;
+    background: #0d150d;
     border: 3px solid #281a30;
     position: relative;
     margin: 0 auto;
@@ -84,63 +78,101 @@
     box-shadow: inset 0 0 30px rgba(0,0,0,0.9), 0 10px 25px rgba(0,0,0,0.5);
   }
 
-  /* タイル1個ずつのスタイル */
   .tile {
     width: 32px;
     height: 32px;
     box-sizing: border-box;
+    image-rendering: pixelated; /* ドット絵感を出す */
   }
 
-  /* 🌲【RPG風床】フローリング模様のドット絵風デザイン */
-  .tile-floor {
-    background: var(--tile-wood);
+  /* 🌿【草地タイル (0)】ドット絵風の芝生のテクスチャ */
+  .tile-grass {
+    background: #1b381b;
     background-image: 
-      linear-gradient(90deg, var(--tile-wood-dark) 1px, transparent 1px),
-      linear-gradient(0deg, var(--tile-wood-dark) 1px, transparent 1px);
-    background-size: 16px 16px; /* ドット絵感を出すための細かい格子 */
+      radial-gradient(#152e15 15%, transparent 16%),
+      radial-gradient(#122612 15%, transparent 16%);
+    background-size: 8px 8px;
+    background-position: 0 0, 4px 4px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  /* 🏜️【土の道タイル (1)】プレイヤーがメインで歩く砂利道 */
+  .tile-dirt {
+    background: #4a3c2c;
+    background-image: 
+      linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.15) 1px, transparent 1px);
+    background-size: 16px 16px;
     position: relative;
   }
-  .tile-floor::before {
+  .tile-dirt::before {
     content: "";
     position: absolute;
     inset: 2px;
-    background: rgba(255,255,255,0.01);
+    background: rgba(255, 255, 255, 0.02);
   }
 
-  /* 📚【立体的な本棚】ポケモン風の並ぶ本棚壁 */
-  .tile-wall {
-    background: var(--shelf-wood);
-    box-shadow: inset 0 -4px 0 var(--shelf-shadow), inset 0 2px 0 rgba(255,255,255,0.1);
+  /* 🧱【レンガの壁 (2)】障害物。重厚な石づくりの洋館の壁 */
+  .tile-brick-wall {
+    background: #3e2723;
+    background-image: 
+      linear-gradient(90deg, #1d0f0d 2px, transparent 2px),
+      linear-gradient(#1d0f0d 2px, transparent 2px);
+    background-size: 16px 10px; /* レンガ調のパターン */
+    border: 1px solid #1d0f0d;
+    box-shadow: inset 0 3px 0 rgba(255,255,255,0.15), inset 0 -3px 0 rgba(0,0,0,0.4);
+  }
+
+  /* 🌲【植え込み・生垣 (3)】障害物。画像のような丸い生垣 */
+  .tile-hedge {
+    background: #0f3d0f;
+    background-image: radial-gradient(#165a16 40%, transparent 45%);
+    background-size: 16px 16px;
+    border-radius: 4px;
+    border: 2px solid #082408;
+    box-shadow: inset 0 4px 0 rgba(255,255,255,0.1), 0 2px 4px rgba(0,0,0,0.4);
+  }
+
+  /* 🗿【水色の女神像 (4)】障害物。画像中央下部にある美しい彫刻をイメージ */
+  .tile-statue {
+    background: #4a3c2c; /* 土台は土の道と同じ */
     position: relative;
   }
-  .tile-wall::before {
-    content: "";
+  .tile-statue::before {
+    content: "⛲";
+    font-size: 16px;
     position: absolute;
-    top: 4px; left: 3px; right: 3px; bottom: 8px;
-    background: linear-gradient(90deg, 
-      #8c2e4b 20%, #2e628c 20%, #2e628c 40%, 
-      #a68b3c 40%, #a68b3c 60%, #407c5a 60%, #407c5a 80%, 
-      #8c2e4b 80%
-    );
-    border-radius: 1px;
-    opacity: 0.85;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 0 4px #4fc3f7) hue-rotate(180deg);
+    animation: statueGlow 2s infinite alternate;
   }
-  .tile-wall::after {
-    content: "";
-    position: absolute;
-    left: 2px; right: 2px; bottom: 4px;
-    height: 2px;
-    background: #140b13;
-    opacity: 0.8;
+  @keyframes statueGlow {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    100% { transform: scale(1.05); opacity: 1; }
   }
 
-  /* ✨【光る本】浮遊して明滅する特別な本 */
+  /* 🏮【街灯 (5)】障害物。暖かな光を放つアンティークな鉄製の街灯 */
+  .tile-lamp {
+    background: #4a3c2c;
+    position: relative;
+  }
+  .tile-lamp::before {
+    content: "🏮";
+    font-size: 16px;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 0 6px var(--gold));
+  }
+
+  /* ✨【光る禁書 (9)】イベントポイント。目標地点 */
   .tile-event {
-    background: var(--tile-wood);
-    background-image: 
-      linear-gradient(90deg, var(--tile-wood-dark) 1px, transparent 1px),
-      linear-gradient(0deg, var(--tile-wood-dark) 1px, transparent 1px);
-    background-size: 16px 16px;
+    background: #4a3c2c;
     position: relative;
   }
   .tile-event-star {
@@ -157,7 +189,6 @@
     font-size: 14px;
     filter: drop-shadow(0 0 5px var(--gold));
   }
-  /* 魔法陣の光を足元に敷く */
   .tile-event::after {
     content: "";
     position: absolute;
@@ -186,17 +217,15 @@
     z-index: 10;
   }
   
-  /* キャラクター本体のグラフィック */
   .sprite {
     width: 24px;
     height: 28px;
-    background: #d9b25e; /* フードの色 */
+    background: #d9b25e; /* フード */
     border-radius: 12px 12px 4px 4px;
     position: relative;
     box-shadow: 0 4px 6px rgba(0,0,0,0.6);
     transition: transform 0.1s ease;
   }
-  /* 顔部分（フードの隙間） */
   .sprite::before {
     content: "";
     position: absolute;
@@ -204,10 +233,9 @@
     left: 4px;
     width: 16px;
     height: 10px;
-    background: #fcd5b5; /* 肌色 */
+    background: #fcd5b5; /* 顔 */
     border-radius: 3px;
   }
-  /* 目（ドット風） */
   .sprite::after {
     content: "";
     position: absolute;
@@ -216,15 +244,15 @@
     width: 2px;
     height: 3px;
     background: #1c1326;
-    box-shadow: 6px 0 0 #1c1326; /* 両目 */
+    box-shadow: 6px 0 0 #1c1326; /* 目 */
   }
 
-  /* 歩く方向によるキャラクター反転 */
+  /* 左を向いたとき反転 */
   .player.face-left .sprite {
-    transform: scaleX(-1); /* 左向きのときは左右反転 */
+    transform: scaleX(-1);
   }
 
-  /* 調べるポップアップ（📖の隣に来た時に出る） */
+  /* ポップアップ「調べる」 */
   .action-bubble {
     position: absolute;
     top: -24px;
@@ -255,7 +283,7 @@
     100% { transform: translateY(-3px); }
   }
 
-  /* ゲームボーイ風操作ボタン */
+  /* コントローラー */
   .controls-wrapper {
     display: flex;
     align-items: center;
@@ -291,7 +319,6 @@
   }
   .btn-empty { visibility: hidden; }
 
-  /* 決定用アクションボタン (Z) */
   .btn-action-round {
     width: 62px;
     height: 62px;
@@ -327,7 +354,7 @@
 
   <div class="game-container">
     <h3>深夜の書庫 探索</h3>
-    <p>【矢印キー/WASD】で移動。【Zキー】または【決定ボタン】で📖を調べて、物語を開きましょう。</p>
+    <p>【十字キー】で道を歩き、女神像の奥にある【光る本📖】まで進んで【決定】を押してください。</p>
     
     <div class="map" id="gameMap">
       <div class="player" id="player">
@@ -360,21 +387,21 @@
   const MAP_SIZE = 10;
   const TILE_SIZE = 32;
 
-  // 0:床  1:本棚  2:イベント本(右下の [8,8])
+  // 0:草地(通行不可) 1:土の道(通行可) 2:レンガ壁(不可) 3:生垣(不可) 4:石像(不可) 5:街灯(不可) 9:光る本(イベント)
   const mapData = [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-    [1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
-    [1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
-    [1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 1, 0, 1],
-    [1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 1, 0, 1, 0, 2, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    [2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+    [2, 1, 1, 1, 3, 3, 3, 0, 0, 2],
+    [2, 1, 3, 1, 1, 1, 1, 3, 0, 2],
+    [2, 1, 3, 3, 3, 3, 1, 3, 0, 2],
+    [2, 1, 1, 1, 1, 3, 1, 3, 3, 2],
+    [2, 3, 3, 3, 1, 3, 1, 1, 1, 2],
+    [2, 0, 0, 3, 1, 3, 3, 4, 1, 2], // [7,6]に水色の女神像
+    [2, 0, 5, 3, 1, 1, 1, 1, 1, 2], // [2,7]にアンティーク街灯
+    [2, 0, 0, 3, 3, 3, 3, 3, 9, 2], // [8,8]が目的地の光る本
+    [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
   ];
 
-  // イベント本がある目標座標
+  // イベント本の座標
   const EVENT_X = 8;
   const EVENT_Y = 8;
 
@@ -385,49 +412,52 @@
   const gameMap = document.getElementById('gameMap');
   const actionBubble = document.getElementById('actionBubble');
 
-  // マップ生成関数
+  // マップを描画する
   function createMap() {
     gameMap.innerHTML = ''; 
-    gameMap.appendChild(playerEl); // プレイヤーを再追加
+    gameMap.appendChild(playerEl);
 
     for (let y = 0; y < MAP_SIZE; y++) {
       for (let x = 0; x < MAP_SIZE; x++) {
         const tileType = mapData[y][x];
         const tile = document.createElement('div');
         tile.className = 'tile';
-        if (tileType === 1) {
-          tile.classList.add('tile-wall');
-        } else if (tileType === 2) {
+        
+        if (tileType === 0) tile.classList.add('tile-grass');
+        else if (tileType === 1) tile.classList.add('tile-dirt');
+        else if (tileType === 2) tile.classList.add('tile-brick-wall');
+        else if (tileType === 3) tile.classList.add('tile-hedge');
+        else if (tileType === 4) tile.classList.add('tile-statue');
+        else if (tileType === 5) tile.classList.add('tile-lamp');
+        else if (tileType === 9) {
           tile.classList.add('tile-event');
-          // 浮遊するドット本を格納するラッパー
           const book = document.createElement('div');
           book.className = 'tile-event-star';
           tile.appendChild(book);
-        } else {
-          tile.classList.add('tile-floor');
         }
+        
         gameMap.appendChild(tile);
       }
     }
     updatePlayer();
   }
 
-  // プレイヤー表示の更新
   function updatePlayer() {
     playerEl.style.left = (playerX * TILE_SIZE) + 'px';
     playerEl.style.top = (playerY * TILE_SIZE) + 'px';
     checkProximity();
   }
 
-  // 移動処理
   function movePlayer(dx, dy) {
     const tx = playerX + dx;
     const ty = playerY + dy;
     
     if (tx < 0 || tx >= MAP_SIZE || ty < 0 || ty >= MAP_SIZE) return;
-    if (mapData[ty][tx] === 1) return;
+    
+    // 土の道(1)と光る本(9)の上だけ歩けるように制限（それ以外の0,2,3,4,5は衝突して進めない）
+    const nextTile = mapData[ty][tx];
+    if (nextTile !== 1 && nextTile !== 9) return;
 
-    // 左に歩いたときは左向き用のクラスをつける、右のときは外す
     if (dx < 0) {
       playerEl.classList.add('face-left');
     } else if (dx > 0) {
@@ -439,12 +469,11 @@
     updatePlayer();
   }
 
-  // 「📖（イベント本）」が上下左右の隣にあるかチェックして調べるポップアップを出す
   function checkProximity() {
     const isAdjacent = (
       (Math.abs(playerX - EVENT_X) === 1 && playerY === EVENT_Y) ||
       (Math.abs(playerY - EVENT_Y) === 1 && playerX === EVENT_X) ||
-      (playerX === EVENT_X && playerY === EVENT_Y) // 重なったときも含む
+      (playerX === EVENT_X && playerY === EVENT_Y)
     );
 
     if (isAdjacent) {
@@ -454,7 +483,6 @@
     }
   }
 
-  // 決定アクションが起きた時の処理（Zキーまたはボタン）
   function tryInteract() {
     const isAdjacent = (
       (Math.abs(playerX - EVENT_X) === 1 && playerY === EVENT_Y) ||
@@ -463,7 +491,6 @@
     );
 
     if (isAdjacent) {
-      // 画面をフラッシュさせつつノベル（index.html）へ遷移
       document.body.style.transition = "background 0.3s ease";
       document.body.style.background = "#fff";
       setTimeout(() => {
@@ -472,14 +499,11 @@
     }
   }
 
-  // キーボードイベント登録
   window.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowUp' || e.key === 'w') { e.preventDefault(); movePlayer(0, -1); }
     if (e.key === 'ArrowDown' || e.key === 's') { e.preventDefault(); movePlayer(0, 1); }
     if (e.key === 'ArrowLeft' || e.key === 'a') { e.preventDefault(); movePlayer(-1, 0); }
     if (e.key === 'ArrowRight' || e.key === 'd') { e.preventDefault(); movePlayer(1, 0); }
-    
-    // Zキー、またはスペース、Enterで調べる
     if (e.key === 'z' || e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
       tryInteract();

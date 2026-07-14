@@ -2,13 +2,13 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>深夜図書館 — 3D書庫探索</title>
+<title>深夜図書館 — 書庫探索</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
 
   :root {
-    --bg-night: #090710;
-    --bg-panel: #161226;
+    --bg-night: #12101c;
+    --bg-panel: #1c1830;
     --gold: #d9b25e;
     --gold-soft: #f0d99a;
     --line: rgba(217,178,94,0.28);
@@ -19,10 +19,10 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background: var(--bg-night);
   }
 
   body {
+    background: var(--bg-night);
     color: #ece6d8;
     font-family: 'Zen Kaku Gothic New', sans-serif;
     display: flex;
@@ -30,156 +30,304 @@
     align-items: center;
     justify-content: center;
     height: 100vh;
+    background: 
+      radial-gradient(circle at 50% 50%, rgba(28,24,48,0.4) 0%, var(--bg-night) 80%);
   }
 
-  .game-container {
-    width: 360px;
+  /* 横並びレイアウト（PC用） */
+  .game-container-wide {
+    width: min(94vw, 840px);
     background: var(--bg-panel);
-    border: 2px solid var(--line);
+    border: 1px solid var(--line);
     border-radius: 16px;
-    padding: 16px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
-    text-align: center;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), inset 0 0 30px rgba(217,178,94,0.03);
     display: flex;
-    flex-direction: column;
+    gap: 28px;
     align-items: center;
   }
 
-  h3 {
+  /* 左：2Dマップ */
+  .view-2d-wrapper {
+    flex-shrink: 0;
+    position: relative;
+  }
+  
+  .map {
+    display: grid;
+    grid-template-columns: repeat(10, 36px);
+    grid-template-rows: repeat(10, 36px);
+    width: 360px;
+    height: 360px;
+    background: #0d150d;
+    border: 3px solid #281a30;
+    position: relative;
+    margin: 0 auto;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 10px 25px rgba(0,0,0,0.5);
+  }
+
+  .tile {
+    width: 36px;
+    height: 36px;
+    box-sizing: border-box;
+    image-rendering: pixelated;
+  }
+
+  /* 🌿 草地タイル */
+  .tile-grass {
+    background: #1b381b;
+    background-image: 
+      radial-gradient(#152e15 15%, transparent 16%),
+      radial-gradient(#122612 15%, transparent 16%);
+    background-size: 8px 8px;
+    background-position: 0 0, 4px 4px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  /* 🏜️ 土の道 */
+  .tile-dirt {
+    background: #4a3c2c;
+    background-image: 
+      linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.15) 1px, transparent 1px);
+    background-size: 18px 18px;
+    position: relative;
+  }
+
+  /* 🧱 レンガ壁 */
+  .tile-brick-wall {
+    background: #3e2723;
+    background-image: 
+      linear-gradient(90deg, #1d0f0d 2px, transparent 2px),
+      linear-gradient(#1d0f0d 2px, transparent 2px);
+    background-size: 18px 12px;
+    border: 1px solid #1d0f0d;
+    box-shadow: inset 0 3px 0 rgba(255,255,255,0.15), inset 0 -3px 0 rgba(0,0,0,0.4);
+  }
+
+  /* 🌲 生垣 */
+  .tile-hedge {
+    background: #0f3d0f;
+    background-image: radial-gradient(#165a16 40%, transparent 45%);
+    background-size: 18px 18px;
+    border-radius: 4px;
+    border: 2px solid #082408;
+    box-shadow: inset 0 4px 0 rgba(255,255,255,0.1), 0 2px 4px rgba(0,0,0,0.4);
+  }
+
+  /* 🗿 女神像 */
+  .tile-statue {
+    background: #4a3c2c;
+    position: relative;
+  }
+  .tile-statue::before {
+    content: "⛲";
+    font-size: 18px;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 0 5px #4fc3f7) hue-rotate(180deg);
+  }
+
+  /* 🏮 街灯 */
+  .tile-lamp {
+    background: #4a3c2c;
+    position: relative;
+  }
+  .tile-lamp::before {
+    content: "🏮";
+    font-size: 18px;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 0 6px var(--gold));
+  }
+
+  /* ✨ 光る禁書 */
+  .tile-event {
+    background: #4a3c2c;
+    position: relative;
+  }
+  .tile-event-star {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: floatBook 1.2s infinite alternate ease-in-out;
+    z-index: 2;
+  }
+  .tile-event-star::before {
+    content: "📖";
+    font-size: 16px;
+    filter: drop-shadow(0 0 5px var(--gold));
+  }
+  @keyframes floatBook {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-4px); }
+  }
+
+  /* 🚶 プレイヤー */
+  .player {
+    width: 36px;
+    height: 36px;
+    position: absolute;
+    transition: left 0.15s ease, top 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+  
+  .sprite {
+    width: 26px;
+    height: 30px;
+    background: #d9b25e;
+    border-radius: 12px 12px 4px 4px;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.6);
+  }
+  .sprite::before {
+    content: "";
+    position: absolute;
+    top: 6px; left: 4px;
+    width: 18px; height: 11px;
+    background: #fcd5b5;
+    border-radius: 3px;
+  }
+  .sprite::after {
+    content: "";
+    position: absolute;
+    top: 9px; left: 7px;
+    width: 2px; height: 3px;
+    background: #1c1326;
+    box-shadow: 8px 0 0 #1c1326;
+  }
+
+  .player.face-left .sprite {
+    transform: scaleX(-1);
+  }
+
+  /* 右：説明パネル */
+  .info-panel {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+  }
+  .info-panel h3 {
     font-family: 'Shippori Mincho', serif;
     color: var(--gold-soft);
-    margin: 0 0 4px;
-    font-size: 18px;
-    letter-spacing: 2px;
-  }
-
-  p {
-    font-size: 11px;
-    color: #a89e8a;
     margin: 0 0 12px;
-    line-height: 1.5;
+    font-size: 22px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 15px rgba(217,178,94,0.35);
   }
-
-  /* ★3D表示用のキャンバスエリア */
-  #canvas3d {
-    width: 320px;
-    height: 320px;
-    border: 2px solid #281a30;
+  .info-panel p {
+    font-size: 13.5px;
+    color: var(--text-dim);
+    line-height: 1.8;
+    margin: 0 0 24px;
+  }
+  .keyboard-guide {
+    background: rgba(217,178,94,0.04);
+    border: 1px dashed var(--line);
     border-radius: 8px;
-    background: #000;
-    overflow: hidden;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    padding: 16px;
+    margin-top: auto;
+  }
+  .keyboard-guide h4 {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: var(--ember);
+    letter-spacing: 1px;
+  }
+  .keyboard-guide ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 12.5px;
+    color: var(--text-main);
+    line-height: 1.6;
   }
 
-  /* コントローラー */
-  .controls-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 320px;
-    margin-top: 14px;
-  }
-
-  .controls-cross {
-    display: grid;
-    grid-template-columns: repeat(3, 36px);
-    grid-template-rows: repeat(3, 36px);
-    gap: 4px;
-  }
-  .btn-dir {
-    background: #281e3a;
-    border: 2px solid #3c2f54;
-    color: var(--gold-soft);
-    border-radius: 8px;
-    font-size: 14px;
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .btn-dir:active {
-    background: #463466;
-    border-color: var(--gold);
-  }
-  .btn-empty { visibility: hidden; }
-
-  .btn-action-round {
-    width: 58px;
-    height: 58px;
-    background: radial-gradient(circle, #e8734a 0%, #b84a25 100%);
-    border: 3px solid var(--gold-soft);
-    border-radius: 50%;
-    color: #fff;
+  /* 調べるポップアップ */
+  .interaction-bubble {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ece6d8;
+    color: #12101c;
     font-size: 11px;
     font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 5px 0 #782910, 0 6px 12px rgba(0,0,0,0.4);
-    transition: transform 0.05s ease;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
+    letter-spacing: 1.5px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--gold);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    animation: bounceBubble 0.6s infinite alternate;
+    pointer-events: none;
+    display: none;
+    z-index: 10;
   }
-  .btn-action-round:active {
-    transform: translateY(3px);
-    box-shadow: 0 2px 0 #782910, 0 3px 6px rgba(0,0,0,0.4);
+  @keyframes bounceBubble {
+    0% { transform: translate(-50%, 0); }
+    100% { transform: translate(-50%, -4px); }
   }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-  <div class="game-container">
-    <h3>深夜の書庫 3D探索</h3>
-    <p>【矢印キー/WASD】で立体書架を移動し、<br>光り輝く禁書の目の前で【決定】を押してください。</p>
-    
-    <div id="canvas3d"></div>
-
-    <div class="controls-wrapper">
-      <div class="controls-cross">
-        <button class="btn-empty"></button>
-        <button class="btn-dir" onclick="movePlayer(0, -1)">▲</button>
-        <button class="btn-empty"></button>
-        <button class="btn-dir" onclick="movePlayer(-1, 0)">◀</button>
-        <button class="btn-empty"></button>
-        <button class="btn-dir" onclick="movePlayer(1, 0)">▶</button>
-        <button class="btn-empty"></button>
-        <button class="btn-dir" onclick="movePlayer(0, 1)">▼</button>
-        <button class="btn-empty"></button>
+  <div class="game-container-wide">
+    <div class="view-2d-wrapper">
+      <div class="map" id="gameMap">
+        <div class="player" id="player">
+          <div class="sprite"></div>
+        </div>
       </div>
+      <div class="interaction-bubble" id="actionBubble">🔍 調べる (Z / SPACE)</div>
+    </div>
+    
+    <div class="info-panel">
+      <h3>深夜の書庫 探索</h3>
+      <p>
+        気がつくと、あなたは薄暗く静まり返った庭園と書架の狭間に立っていた。<br><br>
+        迷路のように入り組んだ通路を抜け、右下の怪しく金色に光り輝く特別な「禁書📖」のもとへ向かってください。
+      </p>
 
-      <button class="btn-action-round" onclick="tryInteract()">
-        <span style="font-size:14px;">決定</span>
-        <span style="font-size:9px; opacity:0.8; margin-top:2px;">A (Z)</span>
-      </button>
+      <div class="keyboard-guide">
+        <h4>⌨️ 操作マニュアル</h4>
+        <ul>
+          <li><b>移動：</b> [矢印キー (↑↓←→)] または [W, A, S, D] キー</li>
+          <li><b>調べる：</b> 本の目の前で [Z]、[SPACE] または [ENTER] キー</li>
+        </ul>
+      </div>
     </div>
   </div>
 
 <script>
-  // ============================================================
-  // 3Dダンジョンマップ設定
-  // ============================================================
   const MAP_SIZE = 10;
-  const TILE_SIZE = 2; // 3D空間上での1マスのサイズ
+  const TILE_SIZE = 36;
 
-  // 0:床  1:本棚(木製ブロック)  9:光る禁書(クリスタル)
+  // 0:草地 1:砂利道 2:レンガ壁 3:生垣 4:石像 5:街灯 9:光る本
   const mapData = [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-    [1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
-    [1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
-    [1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 1, 0, 1],
-    [1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 1, 0, 1, 0, 9, 1], // [8,8]が目的地の光る本
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    [2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+    [2, 1, 1, 1, 3, 3, 3, 0, 0, 2],
+    [2, 1, 3, 1, 1, 1, 1, 3, 0, 2],
+    [2, 1, 3, 3, 3, 3, 1, 3, 0, 2],
+    [2, 1, 1, 1, 1, 3, 1, 3, 3, 2],
+    [2, 3, 3, 3, 1, 3, 1, 1, 1, 2],
+    [2, 0, 0, 3, 1, 3, 3, 4, 1, 2],
+    [2, 0, 5, 3, 1, 1, 1, 1, 1, 2],
+    [2, 0, 0, 3, 3, 3, 3, 3, 9, 2],
+    [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
   ];
 
   const EVENT_X = 8;
@@ -187,151 +335,78 @@
 
   let playerX = 1;
   let playerY = 1;
+  let mapActive = true;
 
-  // ============================================================
-  // Three.jsの初期化（世界・カメラ・照明・レンダラー）
-  // ============================================================
-  const container = document.getElementById('canvas3d');
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x07050d);
+  const gameMap = document.getElementById('gameMap');
+  const playerEl = document.getElementById('player');
+  const actionBubble = document.getElementById('actionBubble');
 
-  // フォグ（霧）を追加して深夜の怪しい奥ゆきを表現
-  scene.fog = new THREE.FogExp2(0x07050d, 0.08);
+  function createMap() {
+    gameMap.innerHTML = '';
+    gameMap.appendChild(playerEl);
 
-  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(320, 320);
-  renderer.shadowMap.enabled = true; // 影を有効にする
-  container.appendChild(renderer.domElement);
-
-  // 照明の追加
-  const ambientLight = new THREE.AmbientLight(0x221a35); // 薄暗い常夜灯
-  scene.add(ambientLight);
-
-  // プレイヤーの上から照らす温かいスポットライト
-  const dirLight = new THREE.DirectionalLight(0xd9b25e, 1.2);
-  dirLight.position.set(5, 12, 5);
-  dirLight.castShadow = true;
-  scene.add(dirLight);
-
-  // ============================================================
-  // 3Dオブジェクトの作成（マップ・壁・床）
-  // ============================================================
-  
-  // 床ジオメトリ
-  const floorGeo = new THREE.PlaneGeometry(MAP_SIZE * TILE_SIZE, MAP_SIZE * TILE_SIZE);
-  const floorMat = new THREE.MeshStandardMaterial({ color: 0x181224, roughness: 0.8 });
-  const floorMesh = new THREE.Mesh(floorGeo, floorMat);
-  floorMesh.rotation.x = -Math.PI / 2;
-  floorMesh.position.set((MAP_SIZE * TILE_SIZE)/2 - TILE_SIZE/2, 0, (MAP_SIZE * TILE_SIZE)/2 - TILE_SIZE/2);
-  floorMesh.receiveShadow = true;
-  scene.add(floorMesh);
-
-  // 本棚壁ブロックの配置
-  const wallGeo = new THREE.BoxGeometry(TILE_SIZE, TILE_SIZE * 1.5, TILE_SIZE);
-  const wallMat = new THREE.MeshStandardMaterial({ color: 0x2d1f3d, roughness: 0.6 });
-
-  for (let y = 0; y < MAP_SIZE; y++) {
-    for (let x = 0; x < MAP_SIZE; x++) {
-      if (mapData[y][x] === 1) {
-        const wall = new THREE.Mesh(wallGeo, wallMat);
-        wall.position.set(x * TILE_SIZE, (TILE_SIZE * 1.5)/2, y * TILE_SIZE);
-        wall.castShadow = true;
-        wall.receiveShadow = true;
-        scene.add(wall);
+    for (let y = 0; y < MAP_SIZE; y++) {
+      for (let x = 0; x < MAP_SIZE; x++) {
+        const tileType = mapData[y][x];
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        
+        if (tileType === 0) tile.classList.add('tile-grass');
+        else if (tileType === 1) tile.classList.add('tile-dirt');
+        else if (tileType === 2) tile.classList.add('tile-brick-wall');
+        else if (tileType === 3) tile.classList.add('tile-hedge');
+        else if (tileType === 4) tile.classList.add('tile-statue');
+        else if (tileType === 5) tile.classList.add('tile-lamp');
+        else if (tileType === 9) {
+          tile.classList.add('tile-event');
+          const book = document.createElement('div');
+          book.className = 'tile-event-star';
+          tile.appendChild(book);
+        }
+        gameMap.appendChild(tile);
       }
     }
+    updatePlayer();
   }
 
-  // 📖【光る禁書（3Dクリスタル）】の配置
-  const bookGeo = new THREE.OctahedronGeometry(0.5, 0); // 八面体でクリスタルを表現
-  const bookMat = new THREE.MeshStandardMaterial({ 
-    color: 0xffaa00, 
-    emissive: 0x664400, 
-    roughness: 0.1, 
-    metalness: 0.9 
-  });
-  const bookMesh = new THREE.Mesh(bookGeo, bookMat);
-  bookMesh.position.set(EVENT_X * TILE_SIZE, 1.0, EVENT_Y * TILE_SIZE);
-  scene.add(bookMesh);
-
-  // 本の近くを怪しく照らす金色の電球
-  const bookLight = new THREE.PointLight(0xffb700, 1.5, 5);
-  bookLight.position.set(EVENT_X * TILE_SIZE, 1.0, EVENT_Y * TILE_SIZE);
-  scene.add(bookLight);
-
-  // 🚶【プレイヤー（3Dピン）】の作成
-  const playerGroup = new THREE.Group();
-  
-  // フード（頭）
-  const headGeo = new THREE.SphereGeometry(0.4, 16, 16);
-  const headMat = new THREE.MeshStandardMaterial({ color: 0xd9b25e, roughness: 0.5 });
-  const headMesh = new THREE.Mesh(headGeo, headMat);
-  headMesh.position.y = 0.8;
-  playerGroup.add(headMesh);
-
-  // ローブ（体）
-  const bodyGeo = new THREE.ConeGeometry(0.45, 0.9, 16);
-  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1c1230, roughness: 0.7 });
-  const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
-  bodyMesh.position.y = 0.35;
-  playerGroup.add(bodyMesh);
-
-  playerGroup.position.set(playerX * TILE_SIZE, 0, playerY * TILE_SIZE);
-  scene.add(playerGroup);
-
-  // ============================================================
-  // 動的アニメーションとカメラ制御
-  // ============================================================
-  let clock = new THREE.Clock();
-
-  function animate() {
-    requestAnimationFrame(animate);
-
-    const elapsedTime = clock.getElapsedTime();
-
-    // 禁書をふわふわ回転させて浮かせる
-    if (bookMesh) {
-      bookMesh.position.y = 0.8 + Math.sin(elapsedTime * 2.5) * 0.15;
-      bookMesh.rotation.y += 0.02;
-    }
-
-    // 🚶 プレイヤーの移動を滑らかにする補間（ラープ処理）
-    const target3dX = playerX * TILE_SIZE;
-    const target3dZ = playerY * TILE_SIZE;
-    playerGroup.position.x += (target3dX - playerGroup.position.x) * 0.2;
-    playerGroup.position.z += (target3dZ - playerGroup.position.z) * 0.2;
-
-    // 📷 カメラの見下ろし追従
-    camera.position.x += ((playerGroup.position.x) - camera.position.x) * 0.1;
-    camera.position.z += ((playerGroup.position.z + 6) - camera.position.z) * 0.1;
-    camera.position.y += ((playerGroup.position.y + 7) - camera.position.y) * 0.1;
-    camera.lookAt(playerGroup.position.x, playerGroup.position.y + 0.4, playerGroup.position.z);
-
-    renderer.render(scene, camera);
+  function updatePlayer() {
+    playerEl.style.left = (playerX * TILE_SIZE) + 'px';
+    playerEl.style.top = (playerY * TILE_SIZE) + 'px';
+    checkProximity();
   }
 
-  // ============================================================
-  // 移動ロジック & イベント連動
-  // ============================================================
   function movePlayer(dx, dy) {
+    if (!mapActive) return;
     const tx = playerX + dx;
     const ty = playerY + dy;
     
     if (tx < 0 || tx >= MAP_SIZE || ty < 0 || ty >= MAP_SIZE) return;
-    if (mapData[ty][tx] === 1) return; // 壁は通行不可
+    
+    const nextTile = mapData[ty][tx];
+    if (nextTile !== 1 && nextTile !== 9) return;
 
-    // プレイヤーの体の向きを移動方向に少し傾ける
-    if (dx !== 0 || dy !== 0) {
-      playerGroup.rotation.y = Math.atan2(-dx, -dy);
+    if (dx < 0) {
+      playerEl.classList.add('face-left');
+    } else if (dx > 0) {
+      playerEl.classList.remove('face-left');
     }
 
     playerX = tx;
     playerY = ty;
+    updatePlayer();
   }
 
-  // 決定時の判定（本の隣にいればノベル画面へジャンプ）
+  function checkProximity() {
+    const isAdjacent = (
+      (Math.abs(playerX - EVENT_X) === 1 && playerY === EVENT_Y) ||
+      (Math.abs(playerY - EVENT_Y) === 1 && playerX === EVENT_X) ||
+      (playerX === EVENT_X && playerY === EVENT_Y)
+    );
+    actionBubble.style.display = isAdjacent ? 'block' : 'none';
+  }
+
   function tryInteract() {
+    if (!mapActive) return;
     const isAdjacent = (
       (Math.abs(playerX - EVENT_X) === 1 && playerY === EVENT_Y) ||
       (Math.abs(playerY - EVENT_Y) === 1 && playerX === EVENT_X) ||
@@ -339,17 +414,18 @@
     );
 
     if (isAdjacent) {
-      // 画面をフラッシュアウトさせてノベルゲームへジャンプ！
-      container.style.transition = "opacity 0.4s ease";
-      container.style.opacity = "0";
+      mapActive = false;
+      // 画面を白くフラッシュアウトさせてノベル画面（index.html）へジャンプ！
+      document.body.style.transition = "background 0.3s ease";
+      document.body.style.background = "#fff";
       setTimeout(() => {
         window.location.href = 'index.html'; 
-      }, 350);
+      }, 300);
     }
   }
 
-  // キーボードイベント
   window.addEventListener('keydown', (e) => {
+    if (!mapActive) return;
     if (e.key === 'ArrowUp' || e.key === 'w') { e.preventDefault(); movePlayer(0, -1); }
     if (e.key === 'ArrowDown' || e.key === 's') { e.preventDefault(); movePlayer(0, 1); }
     if (e.key === 'ArrowLeft' || e.key === 'a') { e.preventDefault(); movePlayer(-1, 0); }
@@ -360,8 +436,7 @@
     }
   });
 
-  // 起動！
-  animate();
+  createMap();
 </script>
 </body>
 </html>

@@ -20,24 +20,32 @@
 
   *{ box-sizing:border-box; }
 
-  html,body{ height:100%; }
+  html,body{ height:100%; margin:0; }
 
   body{
-    margin:0;
-    min-height:100vh;
-    background:
-      radial-gradient(ellipse at 50% -10%, rgba(232,115,74,0.18), transparent 55%),
-      radial-gradient(ellipse at 50% 120%, rgba(217,178,94,0.10), transparent 60%),
-      var(--bg-night);
+    background:var(--bg-night);
     color:var(--text-main);
     font-family:'Zen Kaku Gothic New', sans-serif;
+    position:relative;
+    /* body itself never scrolls — #appRoot below is the scroll container,
+       so this works reliably even inside a fixed-height iframe/preview panel */
+    overflow:hidden;
+  }
+
+  #appRoot{
+    position:relative;
+    height:100%;
+    width:100%;
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
     display:flex;
     flex-direction:column;
     align-items:center;
     padding:26px 14px 40px;
-    position:relative;
-    overflow-x:hidden;
-    transition:filter 1.2s ease;
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(232,115,74,0.18), transparent 55%),
+      radial-gradient(ellipse at 50% 120%, rgba(217,178,94,0.10), transparent 60%);
   }
 
   /* --- 漂う灯の粒子 --- */
@@ -104,7 +112,7 @@
     margin:10px 0 2px;
     z-index:1;
   }
-  .tagline{
+  .target{
     font-size:11px;
     letter-spacing:4px;
     color:var(--text-dim);
@@ -122,6 +130,10 @@
     position:relative;
     overflow:hidden;
     z-index:1;
+    /* 変更点：本自体の最大高さを指定し、内部をFlexbox構造にしてスクロールに対応 */
+    max-height: 72vh;
+    display: flex;
+    flex-direction: column;
   }
   .book::before{
     content:'';
@@ -140,6 +152,7 @@
     opacity:0.9;
     display:flex;
     justify-content:space-between;
+    flex-shrink: 0;
   }
   .scene-tag .inv{
     letter-spacing:0;
@@ -155,6 +168,10 @@
     white-space:pre-wrap;
     min-height:120px;
     letter-spacing:0.5px;
+    /* 変更点：文章が溢れた際に縦スクロールを可能にする設定 */
+    overflow-y: auto;
+    flex-grow: 1;
+    padding-right: 4px;
   }
   .story-text .cursor{
     display:inline-block;
@@ -171,12 +188,14 @@
     height:1px;
     background:var(--line);
     margin:22px auto 20px;
+    flex-shrink: 0;
   }
 
   .choices{
     display:flex;
     flex-direction:column;
     gap:10px;
+    flex-shrink: 0;
   }
 
   .choice-btn{
@@ -277,25 +296,27 @@
 
   <div class="embers" id="embers"></div>
 
-  <div class="topbar">
-    <button class="sound-toggle" id="soundToggle">♪ 音を灯す</button>
-    <div class="catalog" id="catalog">既知の結末 <b>0</b>/9</div>
-  </div>
-
-  <div class="title">深夜図書館の書</div>
-  <div class="tagline">MIDNIGHT LIBRARY — A BRANCHING TALE</div>
-
-  <div class="book" id="bookPanel">
-    <div class="scene-tag">
-      <span id="sceneTag"></span>
-      <span class="inv" id="invTag"></span>
+  <div id="appRoot">
+    <div class="topbar">
+      <button class="sound-toggle" id="soundToggle">♪ 音を灯す</button>
+      <div class="catalog" id="catalog">既知の結末 <b>0</b>/9</div>
     </div>
-    <div class="story-text" id="storyText"></div>
-    <div class="divider"></div>
-    <div class="choices" id="choices"></div>
-  </div>
 
-  <div class="progress" id="progress"></div>
+    <div class="title">深夜図書館の書</div>
+    <div class="tagline">MIDNIGHT LIBRARY — A BRANCHING TALE</div>
+
+    <div class="book" id="bookPanel">
+      <div class="scene-tag">
+        <span id="sceneTag"></span>
+        <span class="inv" id="invTag"></span>
+      </div>
+      <div class="story-text" id="storyText"></div>
+      <div class="divider"></div>
+      <div class="choices" id="choices"></div>
+    </div>
+
+    <div class="progress" id="progress"></div>
+  </div>
 
 <script>
 (function(){
@@ -365,11 +386,6 @@
 
   /* ============================================================
      ストーリーデータ(有向グラフ構造)
-     各ノードは id をキーに持ち、text と choices(選択肢)を持つ。
-     choices の next が別ノードの id を指すことで、
-     選択によって物語が分岐していくグラフ構造になっている。
-     ending: true のノードは物語の終着点(結末)。
-     item: そのノードで手に入る「思い出の品」(任意)。
      ============================================================ */
   const story = {
 
@@ -483,7 +499,7 @@
 
     gentle_ending:{
       tag:'終章・言葉ひとつ',
-      text:'その一言に、女性は驚いたように目を見開き、それからゆっくりと目を細めた。「そんなふうに言われたのは、久しぶり」\n\n彼女の輪郭が、朝靄のようにやわらかくほどけていく。最後まで、寂しさは見せなかった。',
+      text:'その一言に、女性は驚いたように目を見開き、それからゆっくりと目を細めた。「そんなふうに言われたのは、久しぶり」\n\n彼女の輪郭が、朝靄のようにやわらかくほどけていく。最後まで、寂しさは見見せなかった。',
       ending:true,
       endingType:'GOOD ENDING',
       item:{id:'gentle_words', label:'交わした言葉'},

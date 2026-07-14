@@ -14,6 +14,14 @@
     --line: rgba(217,178,94,0.28);
   }
 
+  /* 画面全体のスクロールを防ぐ */
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
   body {
     background: var(--bg-night);
     color: #ece6d8;
@@ -23,16 +31,14 @@
     align-items: center;
     justify-content: center;
     height: 100vh;
-    margin: 0;
-    overflow: hidden;
   }
 
   .game-container {
-    width: min(94vw, 400px);
+    width: 360px; /* マップ(320px)に合わせたコンパクトな幅 */
     background: var(--bg-panel);
     border: 1px solid var(--line);
     border-radius: 14px;
-    padding: 20px;
+    padding: 20px 16px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.55);
     text-align: center;
   }
@@ -40,13 +46,22 @@
   h3 {
     font-family: 'Shippori Mincho', serif;
     color: var(--gold-soft);
-    margin: 0 0 10px;
+    margin: 0 0 6px;
+    font-size: 18px;
   }
 
+  p {
+    font-size: 11px;
+    color: #a89e8a;
+    margin: 0 0 16px;
+    line-height: 1.5;
+  }
+
+  /* ★【重要】10x10のグリッド設定。1コマが32pxです */
   .map {
     display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    grid-template-rows: repeat(10, 1fr);
+    grid-template-columns: repeat(10, 32px);
+    grid-template-rows: repeat(10, 32px);
     width: 320px;
     height: 320px;
     background: #0b0914;
@@ -57,47 +72,100 @@
     overflow: hidden;
   }
 
-  .tile { width: 100%; height: 100%; }
-  .tile-wall { background: #231d3a; position: relative; }
-  .tile-wall::after { content: "📚"; font-size: 12px; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0.5; }
-  .tile-floor { background: #0f0c1e; }
+  /* タイル1個ずつのスタイル */
+  .tile {
+    width: 32px;
+    height: 32px;
+    box-sizing: border-box;
+  }
+
+  /* 本棚（壁） */
+  .tile-wall {
+    background: #231d3a;
+    border: 1px solid rgba(217,178,94,0.05);
+    position: relative;
+  }
+  .tile-wall::after {
+    content: "📚";
+    font-size: 11px;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.55;
+  }
+
+  /* 床（通路） */
+  .tile-floor {
+    background: #0f0c1e;
+    border: 1px solid rgba(217,178,94,0.02); /* マス目を少し見やすくする線 */
+  }
   
+  /* 特別な本（イベント） */
   .tile-event {
     background: radial-gradient(circle, rgba(217,178,94,0.4) 0%, rgba(15,12,30,0) 70%);
     position: relative;
+    animation: pulse 1.5s infinite alternate;
   }
   .tile-event::after {
-    content: "📖"; font-size: 16px; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    content: "📖";
+    font-size: 15px;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     filter: drop-shadow(0 0 4px var(--gold));
   }
+  @keyframes pulse {
+    0% { opacity: 0.7; }
+    100% { opacity: 1; }
+  }
 
+  /* プレイヤー（🚶） */
   .player {
-    width: 32px; height: 32px;
+    width: 32px;
+    height: 32px;
     border: 2px solid var(--gold);
     border-radius: 50%;
     position: absolute;
     transition: left 0.15s ease, top 0.15s ease;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(217,178,94,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(217,178,94,0.25);
+    box-shadow: 0 0 10px rgba(217,178,94,0.5);
     z-index: 10;
   }
-  .player::after { content: "🚶"; font-size: 16px; }
+  .player::after {
+    content: "🚶";
+    font-size: 15px;
+  }
 
+  /* スマホ用操作ボタン（3x3グリッド） */
   .controls {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    width: 140px;
-    margin: 16px auto 0;
+    width: 150px;
+    margin: 18px auto 0;
   }
   .btn-dir {
     background: rgba(217,178,94,0.05);
     border: 1px solid var(--line);
     color: var(--gold-soft);
     border-radius: 8px;
-    padding: 10px;
+    padding: 12px;
     font-size: 16px;
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    transition: background 0.1s ease;
+  }
+  .btn-dir:active {
+    background: rgba(217,178,94,0.2);
   }
   .btn-empty { visibility: hidden; }
 </style>
@@ -106,7 +174,7 @@
 
   <div class="game-container">
     <h3>深夜の書庫 探索</h3>
-    <p style="font-size: 11px; color: #a89e8a; margin-bottom: 14px;">光る本（📖）のマスに到達すると、物語が始まります</p>
+    <p>キーボードの[矢印キー / WASD]、またはボタンで移動し、右下の光る本（📖）まで進んでください。</p>
     
     <div class="map" id="gameMap">
       <div class="player" id="player"></div>
@@ -129,6 +197,7 @@
   const MAP_SIZE = 10;
   const TILE_SIZE = 32;
 
+  // 0:床  1:本棚  2:イベント本(右下の [8,8])
   const mapData = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
@@ -138,7 +207,7 @@
     [1, 0, 0, 0, 0, 0, 0, 1, 0, 1],
     [1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 1, 0, 1, 0, 2, 1], // [8,8] が本の場所
+    [1, 0, 1, 1, 1, 0, 1, 0, 2, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
   ];
 
@@ -148,34 +217,52 @@
   const playerEl = document.getElementById('player');
   const gameMap = document.getElementById('gameMap');
 
+  // マップ生成関数
   function createMap() {
+    gameMap.innerHTML = ''; // 一旦クリア
+    // まずプレイヤーキャラを再び追加
+    gameMap.appendChild(playerEl);
+
+    // 10x10マスを生成
     for (let y = 0; y < MAP_SIZE; y++) {
       for (let x = 0; x < MAP_SIZE; x++) {
         const tileType = mapData[y][x];
         const tile = document.createElement('div');
-        tile.className = 'tile ' + (tileType === 1 ? 'tile-wall' : tileType === 2 ? 'tile-event' : 'tile-floor');
+        tile.className = 'tile';
+        if (tileType === 1) {
+          tile.classList.add('tile-wall');
+        } else if (tileType === 2) {
+          tile.classList.add('tile-event');
+        } else {
+          tile.classList.add('tile-floor');
+        }
         gameMap.appendChild(tile);
       }
     }
     updatePlayer();
   }
 
+  // プレイヤーの位置をCSSのピクセル位置に反映
   function updatePlayer() {
     playerEl.style.left = (playerX * TILE_SIZE) + 'px';
     playerEl.style.top = (playerY * TILE_SIZE) + 'px';
   }
 
+  // 移動処理
   function movePlayer(dx, dy) {
     const tx = playerX + dx;
     const ty = playerY + dy;
+    
+    // マップの外に出ないようにチェック
     if (tx < 0 || tx >= MAP_SIZE || ty < 0 || ty >= MAP_SIZE) return;
+    // 本棚(壁)なら進めない
     if (mapData[ty][tx] === 1) return;
 
     playerX = tx;
     playerY = ty;
     updatePlayer();
 
-    // ★ 本のマス（2）に乗ったら、既存のノベルページ（index.html）へジャンプ！
+    // 本のマス（2）に乗ったら、既存のノベルページ（index.html）へジャンプ！
     if (mapData[playerY][playerX] === 2) {
       setTimeout(() => {
         window.location.href = 'index.html'; 
@@ -183,11 +270,12 @@
     }
   }
 
+  // キーボード移動のイベント登録
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowUp' || e.key === 'w') movePlayer(0, -1);
-    if (e.key === 'ArrowDown' || e.key === 's') movePlayer(0, 1);
-    if (e.key === 'ArrowLeft' || e.key === 'a') movePlayer(-1, 0);
-    if (e.key === 'ArrowRight' || e.key === 'd') movePlayer(1, 0);
+    if (e.key === 'ArrowUp' || e.key === 'w') { e.preventDefault(); movePlayer(0, -1); }
+    if (e.key === 'ArrowDown' || e.key === 's') { e.preventDefault(); movePlayer(0, 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'a') { e.preventDefault(); movePlayer(-1, 0); }
+    if (e.key === 'ArrowRight' || e.key === 'd') { e.preventDefault(); movePlayer(1, 0); }
   });
 
   createMap();

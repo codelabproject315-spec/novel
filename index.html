@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>深夜図書館の書</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
+ 
+  :root{
+    --bg-night:#12101c;
+    --bg-panel:#1c1830;
+    --gold:#d9b25e;
+    --gold-soft:#f0d99a;
+    --ember:#e8734a;
+    --text-main:#ece6d8;
+    --text-dim:#a89e8a;
+    --line:rgba(217,178,94,0.28);
+  }
+ 
+  *{ box-sizing:border-box; }
+ 
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(232,115,74,0.18), transparent 55%),
+      radial-gradient(ellipse at 50% 120%, rgba(217,178,94,0.10), transparent 60%),
+      var(--bg-night);
+    color:var(--text-main);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:26px 14px 40px;
+  }
+ 
+  .title{
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    font-size:clamp(24px,6vw,34px);
+    letter-spacing:8px;
+    color:var(--gold-soft);
+    text-shadow:0 0 22px rgba(217,178,94,0.35);
+    margin:4px 0 2px;
+  }
+  .tagline{
+    font-size:11px;
+    letter-spacing:4px;
+    color:var(--text-dim);
+    margin-bottom:22px;
+  }
+ 
+  .book{
+    width:min(94vw,560px);
+    background:linear-gradient(180deg, var(--bg-panel), #16132a);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.55), inset 0 0 40px rgba(217,178,94,0.03);
+    padding:30px 26px 24px;
+    position:relative;
+    overflow:hidden;
+  }
+  .book::before{
+    content:'';
+    position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(232,115,74,0.06), transparent 40%);
+    pointer-events:none;
+  }
+ 
+  .scene-tag{
+    font-family:'Shippori Mincho', serif;
+    font-size:12px;
+    letter-spacing:5px;
+    color:var(--ember);
+    margin-bottom:14px;
+    min-height:14px;
+    opacity:0.9;
+  }
+ 
+  .story-text{
+    font-family:'Shippori Mincho', serif;
+    font-size:16.5px;
+    line-height:2.05;
+    color:var(--text-main);
+    white-space:pre-wrap;
+    min-height:120px;
+    letter-spacing:0.5px;
+  }
+ 
+  .divider{
+    width:60px;
+    height:1px;
+    background:var(--line);
+    margin:22px auto 20px;
+  }
+ 
+  .choices{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+ 
+  .choice-btn{
+    text-align:left;
+    background:rgba(217,178,94,0.05);
+    border:1px solid var(--line);
+    color:var(--gold-soft);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-size:14.5px;
+    padding:13px 16px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:all .18s ease;
+    line-height:1.5;
+  }
+  .choice-btn:hover{
+    background:rgba(217,178,94,0.14);
+    border-color:var(--gold);
+    transform:translateX(3px);
+  }
+  .choice-btn:active{ transform:scale(0.98); }
+  .choice-btn .arrow{ color:var(--ember); margin-right:8px; }
+ 
+  .ending-badge{
+    display:inline-block;
+    font-family:'Shippori Mincho', serif;
+    font-size:13px;
+    letter-spacing:3px;
+    color:var(--bg-night);
+    background:var(--gold-soft);
+    padding:5px 16px;
+    border-radius:20px;
+    margin-bottom:16px;
+  }
+ 
+  .restart-btn{
+    margin-top:6px;
+    align-self:flex-start;
+    background:transparent;
+    border:1px solid var(--gold);
+    color:var(--gold-soft);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-weight:700;
+    letter-spacing:2px;
+    font-size:13px;
+    padding:11px 22px;
+    border-radius:24px;
+    cursor:pointer;
+  }
+  .restart-btn:hover{ background:var(--gold); color:var(--bg-night); }
+ 
+  .progress{
+    display:flex;
+    gap:5px;
+    margin-top:20px;
+    justify-content:center;
+  }
+  .progress .dot{
+    width:5px; height:5px; border-radius:50%;
+    background:rgba(217,178,94,0.25);
+  }
+  .progress .dot.on{ background:var(--gold); }
+ 
+  .fade-in{ animation:fadeIn .5s ease; }
+  @keyframes fadeIn{ from{ opacity:0; transform:translateY(4px);} to{ opacity:1; transform:translateY(0);} }
+</style>
+</head>
+<body>
+ 
+  <div class="title">深夜図書館の書</div>
+  <div class="tagline">MIDNIGHT LIBRARY — A BRANCHING TALE</div>
+ 
+  <div class="book">
+    <div class="scene-tag" id="sceneTag"></div>
+    <div class="story-text fade-in" id="storyText"></div>
+    <div class="divider"></div>
+    <div class="choices" id="choices"></div>
+  </div>
+ 
+  <div class="progress" id="progress"></div>
+ 
+<script>
+(function(){
+ 
+  /* ============================================================
+     ストーリーデータ(有向グラフ構造)
+     各ノードは id をキーに持ち、text と choices(選択肢)を持つ。
+     choices の next が別ノードの id を指すことで、
+     選択によって物語が分岐していくグラフ構造になっている。
+     ending: true のノードは物語の終着点(結末)。
+     ============================================================ */
+  const story = {
+ 
+    start:{
+      tag:'第一章・閉館',
+      text:'レポートの資料を探しているうちに、気づけば大学図書館の閉館時刻を過ぎていた。\n\n見上げると、天井の照明はすでに半分落とされ、あたりは驚くほど静かだった。スマートフォンの電波は入らない。出口のドアを押しても、鍵がかかっている。\n\n奥の書架のあいだから、かすかに橙色の光が漏れているのに気づいた。',
+      choices:[
+        {label:'光の方へ歩いていく', next:'toward_light'},
+        {label:'まず職員室を探して助けを呼ぶ', next:'find_staff'}
+      ]
+    },
+ 
+    toward_light:{
+      tag:'第二章・古書',
+      text:'光をたどっていくと、普段は立ち入り禁止になっている「特別書架」にたどり着いた。\n\n棚の一番奥に、革表紙の古い本が一冊だけ、まるで呼吸するようにぼんやりと光っている。表紙には文字のない、渦を巻いた紋様だけが刻まれていた。',
+      choices:[
+        {label:'本を手に取ってみる', next:'open_book'},
+        {label:'触れずに、司書に報告しようと考える', next:'report_first'}
+      ]
+    },
+ 
+    find_staff:{
+      tag:'第二章・足音',
+      text:'職員室に向かう途中、廊下の奥から規則正しい足音が聞こえてきた。カツ、カツ、と革靴が床を打つ音。\n\n「誰か、いらっしゃいますか」\n\n声をかけると、足音がぴたりと止まった。振り返った先には、古めかしい制服を着た女性が立っている。この大学では、もう何十年も前に廃止された制服だった。',
+      choices:[
+        {label:'女性に声をかけて話しかける', next:'meet_ghost'},
+        {label:'距離を置き、そっと離れる', next:'avoid_ghost'}
+      ]
+    },
+ 
+    open_book:{
+      tag:'第三章・頁',
+      text:'本を開いた瞬間、紙のあいだから淡い光があふれ出し、あたりの書架が渦を巻くように歪んでいく。\n\n気づけば、見たこともない書庫のような空間に立っていた。無数の本棚が、地平線の先まで続いている。どこかから、誰かが小さく歌う声が聞こえる。',
+      choices:[
+        {label:'歌声のする方へ進む', next:'song_path'},
+        {label:'足元にあった本を拾い上げる', next:'pick_book'}
+      ]
+    },
+ 
+    report_first:{
+      tag:'第三章・逡巡',
+      text:'触れるのは危険な気がして、本には触れずにその場を離れることにした。\n\n廊下を戻っていくと、さきほどまでなかったはずの案内板が壁に掛かっている。「地下書庫はこちら」――この図書館に地下があるなど、聞いたことがなかった。',
+      choices:[
+        {label:'案内板に従い、地下へ降りる', next:'basement'},
+        {label:'無視して、正面玄関へ向かう', next:'front_door'}
+      ]
+    },
+ 
+    meet_ghost:{
+      tag:'第三章・元司書',
+      text:'女性は静かに微笑み、「迷い込んでしまったのね」と呟いた。\n\n聞けば彼女は、五十年以上前にこの図書館で働いていた司書だという。ある夜、大切にしていた蔵書を貸出中に紛失してしまい、それを見つけるまでこの図書館を出られずにいるのだと語った。',
+      choices:[
+        {label:'一緒にその本を探すと申し出る', next:'help_ghost'},
+        {label:'自分が先に出口を探させてほしいと頼む', next:'ask_exit'}
+      ]
+    },
+ 
+    avoid_ghost:{
+      tag:'第三章・静寂',
+      text:'足音を立てないよう、そっと物陰に隠れた。女性はしばらくあたりを見回していたが、やがて何かに気づいたようにうつむき、書架の奥へと消えていった。\n\n静けさが戻ると、床に古い貸出カードが一枚落ちているのに気づいた。かすれた文字で、一冊の本の名前が記されている。',
+      choices:[
+        {label:'カードに書かれた本を書架で探す', next:'find_card_book'},
+        {label:'カードは置いて、出口を探し続ける', next:'front_door'}
+      ]
+    },
+ 
+    song_path:{
+      tag:'第四章・歌',
+      text:'歌声は、幼い少女のもののようだった。近づいていくと、少女は本棚の隙間にちょこんと座り込み、一冊の絵本を抱きしめている。\n\n「おねえちゃんも、迷子なの？」少女はそう言って、こちらを見上げた。',
+      choices:[
+        {label:'一緒に出口を探そうと手を差し出す', next:'good_ending'},
+        {label:'少女が抱える絵本について尋ねる', next:'ask_picture_book'}
+      ]
+    },
+ 
+    pick_book:{
+      tag:'第四章・頁の中',
+      text:'拾い上げた本を開くと、そこには見覚えのある文字――自分が今夜書くはずだったレポートの下書きが、そのままの筆跡で記されていた。\n\nまるでこの空間が、現実の続きのように繋がっている。ページをめくる手が、自然と震えた。',
+      choices:[
+        {label:'最後のページまで読み進める', next:'mystery_ending'},
+        {label:'本を閉じて、その場から離れる', next:'front_door'}
+      ]
+    },
+ 
+    basement:{
+      tag:'第四章・地下',
+      text:'古い石段を降りていくと、天井の低い書庫にたどり着いた。棚には手書きの目録が並び、埃をかぶった箱の中に、名前のない古い日記が一冊収められている。\n\n日記には、かつてこの図書館で行方不明になった学生の記録がつづられていた。',
+      choices:[
+        {label:'日記を最後まで読む', next:'read_diary'},
+        {label:'日記を戻し、静かに立ち去る', next:'front_door'}
+      ]
+    },
+ 
+    front_door:{
+      tag:'第五章・扉',
+      text:'長い廊下を戻り、正面玄関にたどり着いた。押してみると、今度はあっさりとドアが開き、外の冷たい夜気が頬をなでる。\n\n振り返ると、図書館はいつも通りの静かな建物に戻っていた。',
+      ending:true,
+      endingType:'ESCAPE ENDING',
+      text2:'何も持ち帰らず、何も知らないまま、あなたは図書館を後にした。翌朝、誰にこの話をしても、きっと信じてはもらえないだろう。'
+    },
+ 
+    help_ghost:{
+      tag:'終章・約束',
+      text:'元司書と共に書架を巡り、ついに紛失していた一冊――色褪せた詩集を、返却棚の隅に見つけ出した。\n\n本を手渡すと、女性の表情がふっとやわらぎ、長年の緊張が解けたように微笑んだ。「ありがとう。もう、行っていいのよ」\n\n気づけば、あたりには朝の光が差し込んでいた。',
+      ending:true,
+      endingType:'GOOD ENDING',
+      text2:'あなたは誰かの長い夜を、そっと終わらせることができた。図書館の扉を出るとき、背中に温かな気配を感じた気がした。'
+    },
+ 
+    ask_exit:{
+      tag:'終章・拒絶',
+      text:'「まず、出口を教えてください」と頼むと、女性の顔から表情が消えた。\n\n「……そう。誰も、手伝ってはくれないのね」\n\n彼女はうつむいたまま書架の奥へ消え、二度と戻ってこなかった。廊下の照明が一つ、また一つと消えていく。',
+      ending:true,
+      endingType:'BAD ENDING',
+      text2:'出口は見つからないまま、闇の中に一人取り残される。図書館は、静かにあなたを迎え入れたまま――。'
+    },
+ 
+    find_card_book:{
+      tag:'終章・貸出カード',
+      text:'カードに記された本を探し当て、そっとページを開くと、栞代わりに挟まれていた一枚の写真が滑り落ちた。\n\n写真には、若かりし日の司書らしき女性と、一人の学生が笑って写っている。過去の誰かの、大切な思い出のひとつだった。',
+      ending:true,
+      endingType:'NEUTRAL ENDING',
+      text2:'あなたは何かを解決したわけではないが、この図書館に流れる小さな物語の断片に、そっと触れることができた。'
+    },
+ 
+    ask_picture_book:{
+      tag:'終章・絵本',
+      text:'少女が抱える絵本の表紙には、大きな図書館とそこに住む小さな精霊たちの物語が描かれていた。\n\n「これはね、迷子になった子を、おうちまで送ってあげるお話なの」\n\n少女がページをめくると、光の粒があなたの足元に集まり、道を作るように伸びていく。',
+      ending:true,
+      endingType:'GOOD ENDING',
+      text2:'光の道に導かれ、あなたは静かに現実の廊下へと戻っていった。少女の歌声は、しばらく耳の奥に残っていた。'
+    },
+ 
+    mystery_ending:{
+      tag:'終章・頁の奥',
+      text:'最後のページには、こう記されていた。「この本を最後まで読んだ者は、物語の続きを自らの手で綴ることになる」\n\n文字が光の粒となってあなたの手に染み込み、視界がゆっくりと白く染まっていく。',
+      ending:true,
+      endingType:'MYSTERY ENDING',
+      text2:'あなたがその後どこへ辿り着いたのか、誰も知らない。ただ、その日から図書館の特別書架には、新しい一冊が加わっていたという。'
+    },
+ 
+    read_diary:{
+      tag:'終章・記録',
+      text:'日記の最後のページには、震える字でこう書かれていた。「怖くはない。ただ、朝が来るまで、ここで静かに待っていようと思う」\n\n日記を閉じると、どこか遠くで鐘の音が響いた気がした。朝を告げる、大学の時計台の音だった。',
+      ending:true,
+      endingType:'NEUTRAL ENDING',
+      text2:'誰かの静かな覚悟に触れたまま、あなたは地上への階段を上っていく。振り返っても、そこにはもう扉はなかった。'
+    }
+  };
+ 
+  const storyTextEl = document.getElementById('storyText');
+  const sceneTagEl = document.getElementById('sceneTag');
+  const choicesEl = document.getElementById('choices');
+  const progressEl = document.getElementById('progress');
+ 
+  let visitedCount = 0;
+  const TOTAL_STEPS_ESTIMATE = 4;
+ 
+  function renderNode(id){
+    const node = story[id];
+    if(!node) return;
+ 
+    sceneTagEl.textContent = node.tag || '';
+    storyTextEl.classList.remove('fade-in');
+    void storyTextEl.offsetWidth; // reflow でアニメーションを再トリガー
+    storyTextEl.classList.add('fade-in');
+ 
+    choicesEl.innerHTML = '';
+ 
+    if(node.ending){
+      storyTextEl.innerHTML =
+        '<span class="ending-badge">' + node.endingType + '</span>\n\n' +
+        node.text + '\n\n' + (node.text2 || '');
+ 
+      const restartBtn = document.createElement('button');
+      restartBtn.className = 'restart-btn';
+      restartBtn.textContent = 'もう一度、あの夜を選び直す';
+      restartBtn.onclick = ()=>{ visitedCount = 0; renderNode('start'); };
+      choicesEl.appendChild(restartBtn);
+      updateProgress(TOTAL_STEPS_ESTIMATE, true);
+      return;
+    }
+ 
+    storyTextEl.textContent = node.text;
+ 
+    node.choices.forEach((choice, idx)=>{
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.innerHTML = '<span class="arrow">▸</span>' + choice.label;
+      btn.onclick = ()=>{
+        visitedCount++;
+        renderNode(choice.next);
+        document.querySelector('.book').scrollIntoView({behavior:'smooth', block:'start'});
+      };
+      choicesEl.appendChild(btn);
+    });
+ 
+    updateProgress(visitedCount, false);
+  }
+ 
+  function updateProgress(count, done){
+    progressEl.innerHTML = '';
+    const steps = Math.max(count, TOTAL_STEPS_ESTIMATE);
+    for(let i=0;i<TOTAL_STEPS_ESTIMATE;i++){
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (i < count || done ? ' on' : '');
+      progressEl.appendChild(dot);
+    }
+  }
+ 
+  renderNode('start');
+})();
+</script>
+</body>
+</html>
+ 

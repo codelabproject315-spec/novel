@@ -7,11 +7,17 @@
   @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
 
   :root {
-    --bg-night: #12101c;
-    --bg-panel: #1c1830;
+    --bg-night: #090710;
+    --bg-panel: #161226;
     --gold: #d9b25e;
     --gold-soft: #f0d99a;
     --line: rgba(217,178,94,0.28);
+    
+    /* RPGドットマップ用の色調 */
+    --tile-wood: #1e131d;
+    --tile-wood-dark: #140b13;
+    --shelf-wood: #3a2235;
+    --shelf-shadow: #140b15;
   }
 
   /* 画面全体のスクロールを防ぐ */
@@ -31,15 +37,17 @@
     align-items: center;
     justify-content: center;
     height: 100vh;
+    background: 
+      radial-gradient(circle at 50% 50%, rgba(28,24,48,0.4) 0%, var(--bg-night) 80%);
   }
 
   .game-container {
-    width: 360px; /* マップ(320px)に合わせたコンパクトな幅 */
+    width: 360px;
     background: var(--bg-panel);
-    border: 1px solid var(--line);
-    border-radius: 14px;
+    border: 2px solid var(--line);
+    border-radius: 16px;
     padding: 20px 16px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7), inset 0 0 20px rgba(217,178,94,0.05);
     text-align: center;
   }
 
@@ -48,6 +56,8 @@
     color: var(--gold-soft);
     margin: 0 0 6px;
     font-size: 18px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(217,178,94,0.3);
   }
 
   p {
@@ -55,21 +65,23 @@
     color: #a89e8a;
     margin: 0 0 16px;
     line-height: 1.5;
+    letter-spacing: 0.5px;
   }
 
-  /* ★【重要】10x10のグリッド設定。1コマが32pxです */
+  /* ★10x10のグリッド設定。1コマが32pxです */
   .map {
     display: grid;
     grid-template-columns: repeat(10, 32px);
     grid-template-rows: repeat(10, 32px);
     width: 320px;
     height: 320px;
-    background: #0b0914;
-    border: 1px solid var(--line);
+    background: #07040a;
+    border: 3px solid #281a30;
     position: relative;
     margin: 0 auto;
     border-radius: 8px;
     overflow: hidden;
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.9), 0 10px 25px rgba(0,0,0,0.5);
   }
 
   /* タイル1個ずつのスタイル */
@@ -79,117 +91,268 @@
     box-sizing: border-box;
   }
 
-  /* 本棚（壁） */
-  .tile-wall {
-    background: #231d3a;
-    border: 1px solid rgba(217,178,94,0.05);
+  /* 🌲【RPG風床】フローリング模様のドット絵風デザイン */
+  .tile-floor {
+    background: var(--tile-wood);
+    background-image: 
+      linear-gradient(90deg, var(--tile-wood-dark) 1px, transparent 1px),
+      linear-gradient(0deg, var(--tile-wood-dark) 1px, transparent 1px);
+    background-size: 16px 16px; /* ドット絵感を出すための細かい格子 */
     position: relative;
+  }
+  .tile-floor::before {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    background: rgba(255,255,255,0.01);
+  }
+
+  /* 📚【立体的な本棚】ポケモン風の並ぶ本棚壁 */
+  .tile-wall {
+    background: var(--shelf-wood);
+    box-shadow: inset 0 -4px 0 var(--shelf-shadow), inset 0 2px 0 rgba(255,255,255,0.1);
+    position: relative;
+  }
+  .tile-wall::before {
+    content: "";
+    position: absolute;
+    top: 4px; left: 3px; right: 3px; bottom: 8px;
+    background: linear-gradient(90deg, 
+      #8c2e4b 20%, #2e628c 20%, #2e628c 40%, 
+      #a68b3c 40%, #a68b3c 60%, #407c5a 60%, #407c5a 80%, 
+      #8c2e4b 80%
+    );
+    border-radius: 1px;
+    opacity: 0.85;
   }
   .tile-wall::after {
-    content: "📚";
-    font-size: 11px;
+    content: "";
     position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0.55;
+    left: 2px; right: 2px; bottom: 4px;
+    height: 2px;
+    background: #140b13;
+    opacity: 0.8;
   }
 
-  /* 床（通路） */
-  .tile-floor {
-    background: #0f0c1e;
-    border: 1px solid rgba(217,178,94,0.02); /* マス目を少し見やすくする線 */
-  }
-  
-  /* 特別な本（イベント） */
+  /* ✨【光る本】浮遊して明滅する特別な本 */
   .tile-event {
-    background: radial-gradient(circle, rgba(217,178,94,0.4) 0%, rgba(15,12,30,0) 70%);
+    background: var(--tile-wood);
+    background-image: 
+      linear-gradient(90deg, var(--tile-wood-dark) 1px, transparent 1px),
+      linear-gradient(0deg, var(--tile-wood-dark) 1px, transparent 1px);
+    background-size: 16px 16px;
     position: relative;
-    animation: pulse 1.5s infinite alternate;
   }
-  .tile-event::after {
-    content: "📖";
-    font-size: 15px;
+  .tile-event-star {
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    filter: drop-shadow(0 0 4px var(--gold));
+    animation: floatBook 1.2s infinite alternate ease-in-out;
+    z-index: 2;
   }
-  @keyframes pulse {
-    0% { opacity: 0.7; }
-    100% { opacity: 1; }
+  .tile-event-star::before {
+    content: "📖";
+    font-size: 14px;
+    filter: drop-shadow(0 0 5px var(--gold));
+  }
+  /* 魔法陣の光を足元に敷く */
+  .tile-event::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    border: 1px dashed rgba(217,178,94,0.4);
+    animation: rotateMagic 6s linear infinite;
+  }
+  @keyframes floatBook {
+    0% { transform: translateY(-1px); }
+    100% { transform: translateY(-5px); }
+  }
+  @keyframes rotateMagic {
+    100% { transform: rotate(360deg); }
   }
 
-  /* プレイヤー（🚶） */
+  /* 🚶【ちびキャラ】向きが変わるドット風プレイヤー */
   .player {
     width: 32px;
     height: 32px;
-    border: 2px solid var(--gold);
-    border-radius: 50%;
     position: absolute;
     transition: left 0.15s ease, top 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(217,178,94,0.25);
-    box-shadow: 0 0 10px rgba(217,178,94,0.5);
     z-index: 10;
   }
-  .player::after {
-    content: "🚶";
-    font-size: 15px;
+  
+  /* キャラクター本体のグラフィック */
+  .sprite {
+    width: 24px;
+    height: 28px;
+    background: #d9b25e; /* フードの色 */
+    border-radius: 12px 12px 4px 4px;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.6);
+    transition: transform 0.1s ease;
+  }
+  /* 顔部分（フードの隙間） */
+  .sprite::before {
+    content: "";
+    position: absolute;
+    top: 6px;
+    left: 4px;
+    width: 16px;
+    height: 10px;
+    background: #fcd5b5; /* 肌色 */
+    border-radius: 3px;
+  }
+  /* 目（ドット風） */
+  .sprite::after {
+    content: "";
+    position: absolute;
+    top: 9px;
+    left: 7px;
+    width: 2px;
+    height: 3px;
+    background: #1c1326;
+    box-shadow: 6px 0 0 #1c1326; /* 両目 */
   }
 
-  /* スマホ用操作ボタン（3x3グリッド） */
-  .controls {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    width: 150px;
+  /* 歩く方向によるキャラクター反転 */
+  .player.face-left .sprite {
+    transform: scaleX(-1); /* 左向きのときは左右反転 */
+  }
+
+  /* 調べるポップアップ（📖の隣に来た時に出る） */
+  .action-bubble {
+    position: absolute;
+    top: -24px;
+    background: #ece6d8;
+    color: #12101c;
+    font-size: 9px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--gold);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    animation: bounceBubble 0.6s infinite alternate;
+    pointer-events: none;
+    display: none;
+    z-index: 15;
+  }
+  .action-bubble::after {
+    content: "";
+    position: absolute;
+    bottom: -4px; left: 50%;
+    transform: translateX(-50%);
+    border-width: 4px 4px 0;
+    border-style: solid;
+    border-color: #ece6d8 transparent;
+  }
+  @keyframes bounceBubble {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-3px); }
+  }
+
+  /* ゲームボーイ風操作ボタン */
+  .controls-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 320px;
     margin: 18px auto 0;
+    padding: 0 4px;
+  }
+
+  .controls-cross {
+    display: grid;
+    grid-template-columns: repeat(3, 38px);
+    grid-template-rows: repeat(3, 38px);
+    gap: 4px;
   }
   .btn-dir {
-    background: rgba(217,178,94,0.05);
-    border: 1px solid var(--line);
+    background: #281e3a;
+    border: 2px solid #3c2f54;
     color: var(--gold-soft);
     border-radius: 8px;
-    padding: 12px;
-    font-size: 16px;
+    font-size: 14px;
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
     touch-action: manipulation;
-    transition: background 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .btn-dir:active {
-    background: rgba(217,178,94,0.2);
+    background: #463466;
+    border-color: var(--gold);
   }
   .btn-empty { visibility: hidden; }
+
+  /* 決定用アクションボタン (Z) */
+  .btn-action-round {
+    width: 62px;
+    height: 62px;
+    background: radial-gradient(circle, #e8734a 0%, #b84a25 100%);
+    border: 3px solid var(--gold-soft);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 0 #782910, 0 8px 15px rgba(0,0,0,0.4);
+    transition: transform 0.05s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  .btn-action-round span {
+    font-size: 16px;
+    margin-top: -2px;
+  }
+  .btn-action-round:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #782910, 0 4px 8px rgba(0,0,0,0.4);
+  }
 </style>
 </head>
 <body>
 
   <div class="game-container">
     <h3>深夜の書庫 探索</h3>
-    <p>キーボードの[矢印キー / WASD]、またはボタンで移動し、右下の光る本（📖）まで進んでください。</p>
+    <p>【矢印キー/WASD】で移動。【Zキー】または【決定ボタン】で📖を調べて、物語を開きましょう。</p>
     
     <div class="map" id="gameMap">
-      <div class="player" id="player"></div>
+      <div class="player" id="player">
+        <div class="action-bubble" id="actionBubble">調べる (Z)</div>
+        <div class="sprite"></div>
+      </div>
     </div>
 
-    <div class="controls">
-      <button class="btn-empty"></button>
-      <button class="btn-dir" onclick="movePlayer(0, -1)">▲</button>
-      <button class="btn-empty"></button>
-      <button class="btn-dir" onclick="movePlayer(-1, 0)">◀</button>
-      <button class="btn-empty"></button>
-      <button class="btn-dir" onclick="movePlayer(1, 0)">▶</button>
-      <button class="btn-empty"></button>
-      <button class="btn-dir" onclick="movePlayer(0, 1)">▼</button>
-      <button class="btn-empty"></button>
+    <div class="controls-wrapper">
+      <div class="controls-cross">
+        <button class="btn-empty"></button>
+        <button class="btn-dir" onclick="movePlayer(0, -1)">▲</button>
+        <button class="btn-empty"></button>
+        <button class="btn-dir" onclick="movePlayer(-1, 0)">◀</button>
+        <button class="btn-empty"></button>
+        <button class="btn-dir" onclick="movePlayer(1, 0)">▶</button>
+        <button class="btn-empty"></button>
+        <button class="btn-dir" onclick="movePlayer(0, 1)">▼</button>
+        <button class="btn-empty"></button>
+      </div>
+
+      <button class="btn-action-round" onclick="tryInteract()">
+        <span>決定</span>
+        <span style="font-size:10px; opacity:0.8;">A (Z)</span>
+      </button>
     </div>
   </div>
 
@@ -211,19 +374,22 @@
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
   ];
 
+  // イベント本がある目標座標
+  const EVENT_X = 8;
+  const EVENT_Y = 8;
+
   let playerX = 1;
   let playerY = 1;
 
   const playerEl = document.getElementById('player');
   const gameMap = document.getElementById('gameMap');
+  const actionBubble = document.getElementById('actionBubble');
 
   // マップ生成関数
   function createMap() {
-    gameMap.innerHTML = ''; // 一旦クリア
-    // まずプレイヤーキャラを再び追加
-    gameMap.appendChild(playerEl);
+    gameMap.innerHTML = ''; 
+    gameMap.appendChild(playerEl); // プレイヤーを再追加
 
-    // 10x10マスを生成
     for (let y = 0; y < MAP_SIZE; y++) {
       for (let x = 0; x < MAP_SIZE; x++) {
         const tileType = mapData[y][x];
@@ -233,6 +399,10 @@
           tile.classList.add('tile-wall');
         } else if (tileType === 2) {
           tile.classList.add('tile-event');
+          // 浮遊するドット本を格納するラッパー
+          const book = document.createElement('div');
+          book.className = 'tile-event-star';
+          tile.appendChild(book);
         } else {
           tile.classList.add('tile-floor');
         }
@@ -242,10 +412,11 @@
     updatePlayer();
   }
 
-  // プレイヤーの位置をCSSのピクセル位置に反映
+  // プレイヤー表示の更新
   function updatePlayer() {
     playerEl.style.left = (playerX * TILE_SIZE) + 'px';
     playerEl.style.top = (playerY * TILE_SIZE) + 'px';
+    checkProximity();
   }
 
   // 移動処理
@@ -253,29 +424,66 @@
     const tx = playerX + dx;
     const ty = playerY + dy;
     
-    // マップの外に出ないようにチェック
     if (tx < 0 || tx >= MAP_SIZE || ty < 0 || ty >= MAP_SIZE) return;
-    // 本棚(壁)なら進めない
     if (mapData[ty][tx] === 1) return;
+
+    // 左に歩いたときは左向き用のクラスをつける、右のときは外す
+    if (dx < 0) {
+      playerEl.classList.add('face-left');
+    } else if (dx > 0) {
+      playerEl.classList.remove('face-left');
+    }
 
     playerX = tx;
     playerY = ty;
     updatePlayer();
+  }
 
-    // 本のマス（2）に乗ったら、既存のノベルページ（index.html）へジャンプ！
-    if (mapData[playerY][playerX] === 2) {
-      setTimeout(() => {
-        window.location.href = 'index.html'; 
-      }, 300);
+  // 「📖（イベント本）」が上下左右の隣にあるかチェックして調べるポップアップを出す
+  function checkProximity() {
+    const isAdjacent = (
+      (Math.abs(playerX - EVENT_X) === 1 && playerY === EVENT_Y) ||
+      (Math.abs(playerY - EVENT_Y) === 1 && playerX === EVENT_X) ||
+      (playerX === EVENT_X && playerY === EVENT_Y) // 重なったときも含む
+    );
+
+    if (isAdjacent) {
+      actionBubble.style.display = 'block';
+    } else {
+      actionBubble.style.display = 'none';
     }
   }
 
-  // キーボード移動のイベント登録
+  // 決定アクションが起きた時の処理（Zキーまたはボタン）
+  function tryInteract() {
+    const isAdjacent = (
+      (Math.abs(playerX - EVENT_X) === 1 && playerY === EVENT_Y) ||
+      (Math.abs(playerY - EVENT_Y) === 1 && playerX === EVENT_X) ||
+      (playerX === EVENT_X && playerY === EVENT_Y)
+    );
+
+    if (isAdjacent) {
+      // 画面をフラッシュさせつつノベル（index.html）へ遷移
+      document.body.style.transition = "background 0.3s ease";
+      document.body.style.background = "#fff";
+      setTimeout(() => {
+        window.location.href = 'index.html'; 
+      }, 250);
+    }
+  }
+
+  // キーボードイベント登録
   window.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowUp' || e.key === 'w') { e.preventDefault(); movePlayer(0, -1); }
     if (e.key === 'ArrowDown' || e.key === 's') { e.preventDefault(); movePlayer(0, 1); }
     if (e.key === 'ArrowLeft' || e.key === 'a') { e.preventDefault(); movePlayer(-1, 0); }
     if (e.key === 'ArrowRight' || e.key === 'd') { e.preventDefault(); movePlayer(1, 0); }
+    
+    // Zキー、またはスペース、Enterで調べる
+    if (e.key === 'z' || e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      tryInteract();
+    }
   });
 
   createMap();
